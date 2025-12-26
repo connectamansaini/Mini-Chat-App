@@ -3,7 +3,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mini_chat_app/app/app.dart';
-import 'package:mini_chat_app/home/home.dart';
+import 'package:mini_chat_app/src/home/home.dart';
 
 void main() {
   group('App', () {
