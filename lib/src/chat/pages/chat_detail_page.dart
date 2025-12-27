@@ -12,13 +12,16 @@ class ChatDetailPage extends StatefulWidget {
 }
 
 class _ChatDetailPageState extends State<ChatDetailPage> {
-  final TextEditingController _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  int _lastMessageCount = 0;
+  late final TextEditingController _messageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _messageController = TextEditingController();
+  }
 
   @override
   void dispose() {
-    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
   }
@@ -58,19 +61,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     return [
       ...convertedMessages,
       ...state.sentMessages,
-    ];
-  }
-
-  void _scrollToBottom() {
-    if (!_scrollController.hasClients) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!_scrollController.hasClients) return;
-      await _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
+    ].reversed.toList();
   }
 
   @override
@@ -111,14 +102,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       body: Column(
         children: [
           Expanded(
-            child: BlocConsumer<ChatBloc, ChatState>(
-              listener: (context, state) {
-                final chatMessages = _buildMessages(state);
-                if (chatMessages.length > _lastMessageCount) {
-                  _scrollToBottom();
-                }
-                _lastMessageCount = chatMessages.length;
-              },
+            child: BlocBuilder<ChatBloc, ChatState>(
               builder: (context, state) {
                 if (state.chatHistoryStatus.isLoading ||
                     state.chatHistoryStatus.isInitial) {
@@ -153,7 +137,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                 }
 
                 return ListView.builder(
-                  controller: _scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,

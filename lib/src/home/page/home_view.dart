@@ -1,51 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mini_chat_app/src/src.dart';
 
-class HomeView extends StatelessWidget {
-  const HomeView({
-    super.key,
-  });
+class HomeView extends StatefulWidget {
+  const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
+  bool _showHeader = true;
+  static const _toggleThreshold = 18.0;
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+
+      if (delta > _toggleThreshold && _showHeader) {
+        setState(() => _showHeader = false);
+      } else if (delta < -_toggleThreshold && !_showHeader) {
+        setState(() => _showHeader = true);
+      }
+    }
+
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: NestedScrollView(
-        floatHeaderSlivers: true,
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              // snap: true,
-              backgroundColor: Colors.white,
-              elevation: innerBoxIsScrolled ? 0.5 : 0,
-              surfaceTintColor: Colors.white,
-              automaticallyImplyLeading: false,
-              floating: true,
-              toolbarHeight: 0,
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(80),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  opacity: _showHeader ? 1 : 0,
+                  child: _showHeader
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 8),
+                            const TabBarWidget(),
+                            Divider(
+                              color: Colors.grey.shade300,
+                              height: 24,
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: _handleScrollNotification,
+                child: const TabBarView(
                   children: [
-                    const SizedBox(height: 8),
-                    const TabBarWidget(),
-                    Divider(
-                      color: Colors.grey.shade300,
-                      height: 24,
-                    ),
+                    UsersTab(),
+                    HistoryTab(items: historyItems),
                   ],
                 ),
               ),
             ),
-          ];
-        },
-        body: TabBarView(
-          children: [
-            BlocProvider(
-              create: (context) => UserBloc(),
-              child: const UsersTab(),
-            ),
-            const HistoryTab(items: historyItems),
           ],
         ),
       ),
