@@ -1,10 +1,6 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
-import 'package:fabrik_result/fabrik_result.dart';
 import 'package:injectable/injectable.dart';
-import 'package:mini_chat_app/core/app_failure.dart';
-import 'package:mini_chat_app/src/chat/models/word_dictionary_model.dart';
+import 'package:mini_chat_app/src/src.dart';
 
 @lazySingleton
 class ChatService {
@@ -12,14 +8,17 @@ class ChatService {
 
   final dio = Dio();
 
-  Future<Unit> getChatHistory() async {
+  Future<CommentsResponseModel> getChatHistory() async {
     try {
-      final response = await dio.get<Map<String, dynamic>>(
+      final response = await dio.get<dynamic>(
         'https://dummyjson.com/comments',
       );
 
-      log(response.data.toString());
-      return unit;
+      final result = CommentsResponseModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+
+      return result;
     } on AppFailure {
       rethrow;
     } catch (e, st) {
@@ -33,8 +32,13 @@ class ChatService {
         'https://api.dictionaryapi.dev/api/v2/entries/en/$word',
       );
 
-      final data = response.data as List<Map<String, dynamic>>;
-      return WordDictionaryModel.fromJson(data[0]);
+      final data = response.data as List<dynamic>;
+      if (data.isEmpty) {
+        throw AppFailure.validation('No definitions found for "$word".');
+      }
+
+      final first = data.first as Map<String, dynamic>;
+      return WordDictionaryModel.fromJson(first);
     } on AppFailure {
       rethrow;
     } catch (e, st) {

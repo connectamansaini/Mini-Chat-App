@@ -8,3 +8,12 @@ sealed class ChatEvent extends Equatable {
 }
 
 class ChatHistoryRequested extends ChatEvent {}
+
+class WordDefinitionRequested extends ChatEvent {
+  const WordDefinitionRequested(this.word);
+
+  final String word;
+
+  @override
+  List<Object> get props => [word];
+}

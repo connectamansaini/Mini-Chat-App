@@ -1,9 +1,19 @@
+import 'package:mini_chat_app/src/src.dart';
+
 class ChatMessage {
   const ChatMessage({
     required this.text,
     required this.timeLabel,
     required this.isMine,
   });
+
+  factory ChatMessage.fromCommentResponse(Comment response) {
+    return ChatMessage(
+      text: response.body,
+      timeLabel: '',
+      isMine: false,
+    );
+  }
 
   final String text;
   final String timeLabel;

@@ -34,11 +34,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i842.GetChatHistoryUsecase>(
       () => _i842.GetChatHistoryUsecase(gh<_i976.IChatRepository>()),
     );
-    gh.factory<_i251.GetChatHistoryUsecase>(
-      () => _i251.GetChatHistoryUsecase(gh<_i976.IChatRepository>()),
+    gh.factory<_i251.GetWordDefinitionUsecase>(
+      () => _i251.GetWordDefinitionUsecase(gh<_i976.IChatRepository>()),
     );
     gh.factory<_i943.ChatBloc>(
-      () => _i943.ChatBloc(gh<_i251.GetChatHistoryUsecase>()),
+      () => _i943.ChatBloc(
+        gh<_i976.GetChatHistoryUsecase>(),
+        gh<_i976.GetWordDefinitionUsecase>(),
+      ),
     );
     return this;
   }

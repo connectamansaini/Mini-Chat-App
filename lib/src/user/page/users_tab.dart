@@ -13,6 +13,7 @@ class UsersTab extends StatelessWidget {
         builder: (context, state) {
           final users = state.users;
           return ListView.separated(
+            key: const PageStorageKey<String>('usersTabScroll'),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             itemBuilder: (context, index) {
               final user = users[index];

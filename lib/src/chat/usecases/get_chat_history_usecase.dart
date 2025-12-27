@@ -7,13 +7,7 @@ class GetChatHistoryUsecase {
   GetChatHistoryUsecase(this.repository);
   final IChatRepository repository;
 
-  Future<Either<AppFailure, Unit>> call() {
+  Future<Either<AppFailure, CommentsResponse>> call() {
     return repository.getChatHistory();
   }
-
-  // Future<Either<AppFailure<ChatHistory>>> call({
-  //   required ChatHistory chatHistory,
-  // }) {
-  //   return repository.getChatHistory(chatHistory: chatHistory);
-  // }
 }
