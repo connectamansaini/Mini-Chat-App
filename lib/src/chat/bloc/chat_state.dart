@@ -7,6 +7,8 @@ class ChatState extends Equatable {
     this.wordDefinitionStatus = const AppStatus.initial(),
     this.wordDefinition = WordDictionary.empty,
     this.lookupWord = '',
+    this.sendMessageStatus = const AppStatus.initial(),
+    this.sentMessages = const [],
   });
 
   final AppStatus chatHistoryStatus;
@@ -14,6 +16,8 @@ class ChatState extends Equatable {
   final AppStatus wordDefinitionStatus;
   final WordDictionary wordDefinition;
   final String lookupWord;
+  final AppStatus sendMessageStatus;
+  final List<ChatMessage> sentMessages;
 
   @override
   List<Object> get props => [
@@ -22,6 +26,8 @@ class ChatState extends Equatable {
     wordDefinitionStatus,
     wordDefinition,
     lookupWord,
+    sendMessageStatus,
+    sentMessages,
   ];
 
   ChatState copyWith({
@@ -30,6 +36,8 @@ class ChatState extends Equatable {
     AppStatus? wordDefinitionStatus,
     WordDictionary? wordDefinition,
     String? lookupWord,
+    AppStatus? sendMessageStatus,
+    List<ChatMessage>? sentMessages,
   }) {
     return ChatState(
       chatHistoryStatus: chatHistoryStatus ?? this.chatHistoryStatus,
@@ -37,6 +45,8 @@ class ChatState extends Equatable {
       wordDefinitionStatus: wordDefinitionStatus ?? this.wordDefinitionStatus,
       wordDefinition: wordDefinition ?? this.wordDefinition,
       lookupWord: lookupWord ?? this.lookupWord,
+      sendMessageStatus: sendMessageStatus ?? this.sendMessageStatus,
+      sentMessages: sentMessages ?? this.sentMessages,
     );
   }
 

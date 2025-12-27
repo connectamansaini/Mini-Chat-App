@@ -7,6 +7,7 @@ class UsersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocBuilder<UserBloc, UserState>(
@@ -14,6 +15,7 @@ class UsersTab extends StatelessWidget {
           final users = state.users;
           return ListView.separated(
             key: const PageStorageKey<String>('usersTabScroll'),
+            // primary: false,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             itemBuilder: (context, index) {
               final user = users[index];
@@ -51,6 +53,9 @@ class UsersTab extends StatelessWidget {
 
                     context.read<UserBloc>().add(CreateUser(name));
                     Navigator.of(dialogContext).pop();
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('User added: $name')),
+                    );
                   },
                   child: const Text('Add'),
                 ),

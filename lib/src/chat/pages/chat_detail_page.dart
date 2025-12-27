@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mini_chat_app/src/src.dart';
 
-class ChatDetailPage extends StatelessWidget {
+class ChatDetailPage extends StatefulWidget {
   const ChatDetailPage({required this.user, required this.messages, super.key});
 
   final UserModel user;
   final List<ChatMessage> messages;
+
+  @override
+  State<ChatDetailPage> createState() => _ChatDetailPageState();
+}
+
+class _ChatDetailPageState extends State<ChatDetailPage> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  int _lastMessageCount = 0;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
 
   Future<void> _onWordTap(BuildContext context, String rawWord) async {
     final normalized = rawWord.replaceAll(RegExp('[^A-Za-z]'), '');
@@ -22,9 +38,39 @@ class ChatDetailPage extends StatelessWidget {
       ),
       builder: (sheetContext) => BlocProvider.value(
         value: context.read<ChatBloc>(),
-        child: _DictionaryBottomSheet(word: normalized),
+        child: DictionaryBottomSheet(word: normalized),
       ),
     );
+  }
+
+  void _onSendTap(BuildContext context) {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+    context.read<ChatBloc>().add(ChatMessageSendRequested(text));
+    _messageController.clear();
+  }
+
+  List<ChatMessage> _buildMessages(ChatState state) {
+    final comments = List.of(state.commentsResponse.comments);
+    final convertedMessages = comments.map(ChatMessage.fromCommentResponse);
+
+    return [
+      ...widget.messages,
+      ...convertedMessages,
+      ...state.sentMessages,
+    ];
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!_scrollController.hasClients) return;
+      await _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   @override
@@ -38,13 +84,13 @@ class ChatDetailPage extends StatelessWidget {
         titleSpacing: 0,
         title: Row(
           children: [
-            UserAvatar(user: user.copyWith(isOnline: true)),
+            UserAvatar(user: widget.user.copyWith(isOnline: true)),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.name,
+                  widget.user.name,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -65,32 +111,61 @@ class ChatDetailPage extends StatelessWidget {
       body: Column(
         children: [
           Expanded(
-            child: BlocBuilder<ChatBloc, ChatState>(
+            child: BlocConsumer<ChatBloc, ChatState>(
+              listener: (context, state) {
+                final chatMessages = _buildMessages(state);
+                if (chatMessages.length > _lastMessageCount) {
+                  _scrollToBottom();
+                }
+                _lastMessageCount = chatMessages.length;
+              },
               builder: (context, state) {
-                if (state.chatHistoryStatus.isSuccess) {
-                  final comments = List.of(state.commentsResponse.comments);
-                  final convertedMessages = comments.map(
-                    ChatMessage.fromCommentResponse,
-                  );
+                if (state.chatHistoryStatus.isLoading ||
+                    state.chatHistoryStatus.isInitial) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  final chatMessages = messages + convertedMessages.toList();
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    itemCount: chatMessages.length,
-                    itemBuilder: (context, index) {
-                      final message = chatMessages[index];
-                      return ChatBubble(
-                        message: message,
-                        onWordTap: (word) => _onWordTap(context, word),
-                      );
-                    },
+                if (state.chatHistoryStatus.isFailure) {
+                  final message =
+                      state.chatHistoryStatus.error?.message ?? 'Load failed';
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        message,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () => context.read<ChatBloc>().add(
+                          ChatHistoryRequested(),
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   );
                 }
-                return const Center(
-                  child: CircularProgressIndicator(),
+
+                final chatMessages = _buildMessages(state);
+                if (chatMessages.isEmpty) {
+                  return const Center(child: Text('No messages yet.'));
+                }
+
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  itemCount: chatMessages.length,
+                  itemBuilder: (context, index) {
+                    final message = chatMessages[index];
+                    return ChatBubble(
+                      message: message,
+                      onWordTap: (word) => _onWordTap(context, word),
+                    );
+                  },
                 );
               },
             ),
@@ -110,25 +185,35 @@ class ChatDetailPage extends StatelessWidget {
                       color: const Color(0xFFF1F3F7),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: _messageController,
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
                         hintText: 'Type a message...',
                         border: InputBorder.none,
                         isDense: true,
                       ),
-                      minLines: 1,
-                      maxLines: 4,
+                      onSubmitted: (_) => _onSendTap(context),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0F6EFF),
-                    shape: BoxShape.circle,
+                InkWell(
+                  onTap: () => _onSendTap(context),
+                  borderRadius: BorderRadius.circular(32),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0F6EFF),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
-                  padding: const EdgeInsets.all(12),
-                  child: const Icon(Icons.send, color: Colors.white, size: 20),
                 ),
               ],
             ),
@@ -139,8 +224,8 @@ class ChatDetailPage extends StatelessWidget {
   }
 }
 
-class _DictionaryBottomSheet extends StatelessWidget {
-  const _DictionaryBottomSheet({required this.word});
+class DictionaryBottomSheet extends StatelessWidget {
+  const DictionaryBottomSheet({required this.word, super.key});
 
   final String word;
 
@@ -155,12 +240,12 @@ class _DictionaryBottomSheet extends StatelessWidget {
               state.lookupWord.toLowerCase() == word.toLowerCase();
 
           if (!isCurrentWord || status.isInitial || status.isLoading) {
-            return _DictionaryStateView.loading(word: word);
+            return DictionaryStateView.loading(word: word);
           }
 
           if (status.isFailure) {
             final message = status.error?.message ?? 'Unable to load meaning.';
-            return _DictionaryStateView.error(
+            return DictionaryStateView.error(
               word: word,
               message: message,
               onRetry: () =>
@@ -170,39 +255,39 @@ class _DictionaryBottomSheet extends StatelessWidget {
 
           final dictionary = state.wordDefinition;
           if (dictionary.isEmpty || dictionary.meanings.isEmpty) {
-            return _DictionaryStateView.empty(word: word);
+            return DictionaryStateView.empty(word: word);
           }
 
-          return _DictionaryResultView(dictionary: dictionary);
+          return DictionaryResultView(dictionary: dictionary);
         },
       ),
     );
   }
 }
 
-class _DictionaryStateView extends StatelessWidget {
-  const _DictionaryStateView._({
+class DictionaryStateView extends StatelessWidget {
+  const DictionaryStateView._({
     required this.word,
     required this.child,
   });
 
-  factory _DictionaryStateView.loading({required String word}) =>
-      _DictionaryStateView._(
+  factory DictionaryStateView.loading({required String word}) =>
+      DictionaryStateView._(
         word: word,
         child: const Center(child: CircularProgressIndicator()),
       );
 
-  factory _DictionaryStateView.empty({required String word}) =>
-      _DictionaryStateView._(
+  factory DictionaryStateView.empty({required String word}) =>
+      DictionaryStateView._(
         word: word,
         child: const Text('No definitions available for this word.'),
       );
 
-  factory _DictionaryStateView.error({
+  factory DictionaryStateView.error({
     required String word,
     required String message,
     required VoidCallback onRetry,
-  }) => _DictionaryStateView._(
+  }) => DictionaryStateView._(
     word: word,
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -247,8 +332,8 @@ class _DictionaryStateView extends StatelessWidget {
   }
 }
 
-class _DictionaryResultView extends StatelessWidget {
-  const _DictionaryResultView({required this.dictionary});
+class DictionaryResultView extends StatelessWidget {
+  const DictionaryResultView({required this.dictionary, super.key});
 
   final WordDictionary dictionary;
 

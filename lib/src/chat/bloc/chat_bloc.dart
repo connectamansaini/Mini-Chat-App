@@ -13,13 +13,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc(
     this._getChatHistoryUsecase,
     this._getWordDefinitionUsecase,
+    this._getSampleMessageUsecase,
   ) : super(const ChatState()) {
     on<ChatHistoryRequested>(_onChatHistoryRequested);
     on<WordDefinitionRequested>(_onWordDefinitionRequested);
+    on<ChatMessageSendRequested>(_onChatMessageSendRequested);
   }
 
   final GetChatHistoryUsecase _getChatHistoryUsecase;
   final GetWordDefinitionUsecase _getWordDefinitionUsecase;
+  final GetSampleMessageUsecase _getSampleMessageUsecase;
 
   Future<void> _onChatHistoryRequested(
     ChatHistoryRequested event,
@@ -69,6 +72,46 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         (definition) => state.copyWith(
           wordDefinitionStatus: const AppStatus.success(),
           wordDefinition: definition,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onChatMessageSendRequested(
+    ChatMessageSendRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    final text = event.text.trim();
+    if (text.isEmpty) return;
+
+    final userMessage = ChatMessage(
+      text: text,
+      timeLabel: '',
+      isMine: true,
+    );
+
+    emit(
+      state.copyWith(
+        sendMessageStatus: const AppStatus.loading(),
+        sentMessages: [...state.sentMessages, userMessage],
+      ),
+    );
+
+    final responseOrFailure = await _getSampleMessageUsecase.call(
+      id: state.sentMessages.length + 1,
+    );
+
+    emit(
+      responseOrFailure.fold(
+        (failure) => state.copyWith(
+          sendMessageStatus: AppStatus.failure(failure),
+        ),
+        (comment) => state.copyWith(
+          sendMessageStatus: const AppStatus.success(),
+          sentMessages: [
+            ...state.sentMessages,
+            ChatMessage.fromCommentResponse(comment),
+          ],
         ),
       ),
     );

@@ -45,4 +45,19 @@ class ChatService {
       throw AppFailure.unexpected(e, st);
     }
   }
+
+  Future<CommentModel> getSampleMessage({int id = 1}) async {
+    try {
+      final response = await dio.get<dynamic>(
+        'https://dummyjson.com/comments/$id',
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      return CommentModel.fromJson(data);
+    } on AppFailure {
+      rethrow;
+    } catch (e, st) {
+      throw AppFailure.unexpected(e, st);
+    }
+  }
 }

@@ -5,6 +5,7 @@ import 'package:mini_chat_app/src/src.dart';
 abstract class IChatRepository {
   Future<Either<AppFailure, CommentsResponse>> getChatHistory();
   Future<Either<AppFailure, WordDictionary>> getWordDictionary(String word);
+  Future<Either<AppFailure, Comment>> getSampleMessage({int id});
 }
 
 @LazySingleton(as: IChatRepository)
@@ -31,6 +32,18 @@ class ChatRepository implements IChatRepository {
     try {
       final definition = await chatService.getWordDictionary(word);
       return right(definition.toEntity);
+    } on AppFailure catch (f) {
+      return left(f);
+    } on Object catch (e, st) {
+      return left(AppFailure.unexpected(e, st));
+    }
+  }
+
+  @override
+  Future<Either<AppFailure, Comment>> getSampleMessage({int id = 1}) async {
+    try {
+      final comment = await chatService.getSampleMessage(id: id);
+      return right(comment.toEntity);
     } on AppFailure catch (f) {
       return left(f);
     } on Object catch (e, st) {

@@ -17,3 +17,12 @@ class WordDefinitionRequested extends ChatEvent {
   @override
   List<Object> get props => [word];
 }
+
+class ChatMessageSendRequested extends ChatEvent {
+  const ChatMessageSendRequested(this.text);
+
+  final String text;
+
+  @override
+  List<Object> get props => [text];
+}

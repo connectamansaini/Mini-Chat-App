@@ -16,6 +16,8 @@ import 'package:mini_chat_app/src/chat/chat_repository.dart' as _i275;
 import 'package:mini_chat_app/src/chat/chat_service.dart' as _i508;
 import 'package:mini_chat_app/src/chat/usecases/get_chat_history_usecase.dart'
     as _i842;
+import 'package:mini_chat_app/src/chat/usecases/get_sample_message_usecase.dart'
+    as _i862;
 import 'package:mini_chat_app/src/chat/usecases/get_word_defination_usecase.dart'
     as _i251;
 import 'package:mini_chat_app/src/src.dart' as _i976;
@@ -37,10 +39,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i251.GetWordDefinitionUsecase>(
       () => _i251.GetWordDefinitionUsecase(gh<_i976.IChatRepository>()),
     );
+    gh.factory<_i862.GetSampleMessageUsecase>(
+      () => _i862.GetSampleMessageUsecase(gh<_i976.IChatRepository>()),
+    );
     gh.factory<_i943.ChatBloc>(
       () => _i943.ChatBloc(
         gh<_i976.GetChatHistoryUsecase>(),
         gh<_i976.GetWordDefinitionUsecase>(),
+        gh<_i976.GetSampleMessageUsecase>(),
       ),
     );
     return this;
