@@ -103,7 +103,7 @@ void main() {
     testWidgets('scrolls to bottom when new messages arrive', (tester) async {
       final bloc = _MockChatBloc();
 
-      final state1 = buildState(sent: const []);
+      final state1 = buildState();
       final state2 = buildState(
         sent: const [
           ChatMessage(text: 'User msg', timeLabel: '', isMine: true),
