@@ -40,10 +40,6 @@ void main() {
     sentMessages: sent,
   );
 
-  const seedMessages = [
-    ChatMessage(text: 'Seed message', timeLabel: '10:00', isMine: true),
-  ];
-
   group('ChatDetailPage', () {
     testWidgets('renders seed + history messages', (tester) async {
       final bloc = _MockChatBloc();
@@ -61,7 +57,6 @@ void main() {
                 initials: 'U',
                 isOnline: true,
               ),
-              messages: seedMessages,
             ),
           ),
         ),
@@ -87,7 +82,6 @@ void main() {
                 initials: 'U',
                 isOnline: true,
               ),
-              messages: seedMessages,
             ),
           ),
         ),
@@ -125,7 +119,6 @@ void main() {
                 initials: 'U',
                 isOnline: true,
               ),
-              messages: seedMessages,
             ),
           ),
         ),
@@ -176,7 +169,6 @@ void main() {
                 initials: 'U',
                 isOnline: true,
               ),
-              messages: seedMessages,
             ),
           ),
         ),

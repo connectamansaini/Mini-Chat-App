@@ -110,7 +110,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           sendMessageStatus: const AppStatus.success(),
           sentMessages: [
             ...state.sentMessages,
-            ChatMessage.fromCommentResponse(comment),
+            ChatMessage.fromCommentResponse(response: comment, isEven: false),
           ],
         ),
       ),

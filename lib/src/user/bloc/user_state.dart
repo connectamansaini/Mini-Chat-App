@@ -2,7 +2,6 @@ part of 'user_bloc.dart';
 
 class UserState extends Equatable {
   const UserState({
-    // this.users = const [],
     this.users = mockUsers,
   });
 

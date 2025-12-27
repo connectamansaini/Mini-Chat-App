@@ -12,7 +12,7 @@ class HistoryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       key: const PageStorageKey<String>('historyTabScroll'),
-      primary: false,
+      // primary: false,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       itemBuilder: (context, index) {
         final item = items[index];
@@ -98,10 +98,8 @@ class HistoryTile extends StatelessWidget {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => BlocProvider(
-          create: (context) => getIt<ChatBloc>()
-          // ..add(ChatHistoryRequested())
-          ,
-          child: ChatDetailPage(user: user, messages: messages),
+          create: (context) => getIt<ChatBloc>()..add(ChatHistoryRequested()),
+          child: ChatDetailPage(user: user),
         ),
       ),
     );

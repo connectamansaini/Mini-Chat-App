@@ -3,10 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mini_chat_app/src/src.dart';
 
 class ChatDetailPage extends StatefulWidget {
-  const ChatDetailPage({required this.user, required this.messages, super.key});
+  const ChatDetailPage({required this.user, super.key});
 
   final UserModel user;
-  final List<ChatMessage> messages;
 
   @override
   State<ChatDetailPage> createState() => _ChatDetailPageState();
@@ -51,11 +50,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   }
 
   List<ChatMessage> _buildMessages(ChatState state) {
-    final comments = List.of(state.commentsResponse.comments);
-    final convertedMessages = comments.map(ChatMessage.fromCommentResponse);
+    final comments = List.of(state.commentsResponse.comments).reversed;
+    final convertedMessages = comments.map(
+      (e) => ChatMessage.fromCommentResponse(response: e),
+    );
 
     return [
-      ...widget.messages,
       ...convertedMessages,
       ...state.sentMessages,
     ];

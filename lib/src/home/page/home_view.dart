@@ -15,7 +15,7 @@ class HomeView extends StatelessWidget {
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              snap: true,
+              // snap: true,
               backgroundColor: Colors.white,
               elevation: innerBoxIsScrolled ? 0.5 : 0,
               surfaceTintColor: Colors.white,

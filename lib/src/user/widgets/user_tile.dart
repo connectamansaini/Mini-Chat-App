@@ -56,9 +56,8 @@ class UserTile extends StatelessWidget {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => BlocProvider(
-          create: (context) => getIt<ChatBloc>(),
-          // ..add(ChatHistoryRequested())
-          child: ChatDetailPage(user: user, messages: messages),
+          create: (context) => getIt<ChatBloc>()..add(ChatHistoryRequested()),
+          child: ChatDetailPage(user: user),
         ),
       ),
     );
