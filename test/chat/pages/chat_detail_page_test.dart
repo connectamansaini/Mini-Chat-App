@@ -16,8 +16,14 @@ void main() {
     registerFallbackValue(_FakeChatState());
   });
 
-  ChatState buildState({List<ChatMessage> sent = const []}) => ChatState(
-    chatHistoryStatus: const AppStatus.success(),
+  ChatState buildState({
+    List<ChatMessage> sent = const [],
+    AppStatus chatHistoryStatus = const AppStatus.success(),
+    WordDictionary wordDictionary = WordDictionary.empty,
+    AppStatus wordStatus = const AppStatus.initial(),
+    String lookup = '',
+  }) => ChatState(
+    chatHistoryStatus: chatHistoryStatus,
     commentsResponse: const CommentsResponse(
       comments: [
         Comment(
@@ -28,6 +34,9 @@ void main() {
         ),
       ],
     ),
+    wordDefinition: wordDictionary,
+    wordDefinitionStatus: wordStatus,
+    lookupWord: lookup,
     sentMessages: sent,
   );
 
@@ -89,6 +98,95 @@ void main() {
       await tester.pump();
 
       verify(() => bloc.add(const ChatMessageSendRequested('Hi!'))).called(1);
+    });
+
+    testWidgets('scrolls to bottom when new messages arrive', (tester) async {
+      final bloc = _MockChatBloc();
+
+      final state1 = buildState(sent: const []);
+      final state2 = buildState(
+        sent: const [
+          ChatMessage(text: 'User msg', timeLabel: '', isMine: true),
+          ChatMessage(text: 'API reply', timeLabel: '', isMine: false),
+        ],
+      );
+
+      when(() => bloc.state).thenReturn(state1);
+      whenListen(bloc, Stream<ChatState>.fromIterable([state1, state2]));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider.value(
+            value: bloc,
+            child: const ChatDetailPage(
+              user: UserModel(
+                name: 'User',
+                subtitle: 'Now',
+                initials: 'U',
+                isOnline: true,
+              ),
+              messages: seedMessages,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final scrollable = find.byType(ListView);
+      final scrollState = tester.state<ScrollableState>(scrollable);
+      expect(
+        scrollState.position.pixels,
+        closeTo(scrollState.position.maxScrollExtent, 1),
+      );
+    });
+
+    testWidgets('shows dictionary bottom sheet when a word is tapped', (
+      tester,
+    ) async {
+      final bloc = _MockChatBloc();
+
+      final dictState = buildState(
+        wordDictionary: const WordDictionary(
+          word: 'Seed',
+          meanings: [
+            Meaning(
+              partOfSpeech: 'noun',
+              definitions: [
+                DefinitionEntry(definition: 'A unit of reproduction.'),
+              ],
+            ),
+          ],
+        ),
+        wordStatus: const AppStatus.success(),
+        lookup: 'Seed',
+      );
+
+      when(() => bloc.state).thenReturn(dictState);
+      whenListen(bloc, const Stream<ChatState>.empty());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider.value(
+            value: bloc,
+            child: const ChatDetailPage(
+              user: UserModel(
+                name: 'User',
+                subtitle: 'Now',
+                initials: 'U',
+                isOnline: true,
+              ),
+              messages: seedMessages,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Seed'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DictionaryBottomSheet), findsOneWidget);
+      expect(find.textContaining('A unit of reproduction.'), findsOneWidget);
     });
   });
 }
